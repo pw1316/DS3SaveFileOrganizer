@@ -5,11 +5,10 @@
 
 #ifdef _WIN32
 #include <ShlObj.h>
-inline QString GetAppDataPath()
-{
-	char buffer[256];
-	SHGetSpecialFolderPathA(nullptr, buffer, CSIDL_APPDATA, false);
-	return buffer;
+inline QString GetAppDataPath() {
+  char buffer[256];
+  SHGetSpecialFolderPathA(nullptr, buffer, CSIDL_APPDATA, false);
+  return buffer;
 }
 #else
 #error Not Implemented!

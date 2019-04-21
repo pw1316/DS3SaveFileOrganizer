@@ -30,52 +30,46 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="save_file.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DSSaveFile.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SaveFileDialog.cpp">
+    <ClCompile Include="main.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <QtMoc Include="DSSaveFile.h">
+    <QtMoc Include="save_file.h">
       <Filter>Header Files</Filter>
     </QtMoc>
-    <QtMoc Include="SaveFileDialog.h">
+    <QtMoc Include="save_file_dialog.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
-    <QtUic Include="DSSaveFile.ui">
+    <QtUic Include="save_file.ui">
       <Filter>Form Files</Filter>
     </QtUic>
-    <QtUic Include="SaveFileDialog.ui">
+    <QtUic Include="save_file_dialog.ui">
       <Filter>Form Files</Filter>
     </QtUic>
-  </ItemGroup>
-  <ItemGroup>
-    <QtRcc Include="DSSaveFile.qrc">
-      <Filter>Resource Files</Filter>
-    </QtRcc>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DSSaveFile.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="GeneratedFiles\ui_DSSaveFile.h">
-      <Filter>Generated Files</Filter>
-    </ClInclude>
-    <ClInclude Include="GeneratedFiles\ui_SaveFileDialog.h">
-      <Filter>Generated Files</Filter>
-    </ClInclude>
     <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="app_data_wrapper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="DSSaveFile.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtRcc Include="save_file.qrc">
+      <Filter>Resource Files</Filter>
+    </QtRcc>
   </ItemGroup>
 </Project>

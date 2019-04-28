@@ -9,13 +9,11 @@
 
 #include "save_file_dialog.h"
 
+#define QDIR_2_CSTR(dir) (dir).absolutePath().toStdString().c_str()
+
 void DSSaveFile::bindSignalSlot() {
-  connect<void (QComboBox::*)(int)>(ui_.game_combo_box,
-                                    &QComboBox::currentIndexChanged, this,
-                                    &DSSaveFile::OnGameChanged);
-  connect<void (QComboBox::*)(int)>(ui_.profile_combo_box,
-                                    &QComboBox::currentIndexChanged, this,
-                                    &DSSaveFile::OnProfileChanged);
+  connect<void (QComboBox::*)(int)>(ui_.game_combo_box, &QComboBox::activated,
+                                    this, &DSSaveFile::OnChooseGame);
   connect(ui_.loadButton, &QPushButton::clicked, this, &DSSaveFile::LoadFile);
   connect(ui_.saveButton, &QPushButton::clicked, this, &DSSaveFile::SaveFile);
   connect(ui_.renameButton, &QPushButton::clicked, this,
@@ -24,13 +22,23 @@ void DSSaveFile::bindSignalSlot() {
           &DSSaveFile::RemoveFile);
 }
 
-void DSSaveFile::OnGameChanged(int index) {
-  QDir save_file_path(app_data_path_);
-  if (!save_file_path.cd(kIndex2Game[index])) {
-    QMessageBox::critical(this, "Save data not found", kIndex2Game[index]);
-    exit(1);
+void DSSaveFile::OnChooseGame(int index) {
+  // Not changed
+  if (current_game_id_ == index) {
+    qDebug("Same game id");
+    return;
   }
-  auto s = save_file_path.absolutePath();
+
+  QDir save_file_path(app_data_path_);
+
+  // Target game file should exist
+  if (!save_file_path.cd(kIndex2Game[index])) {
+    QMessageBox::critical(this, kIndex2Game[index], "Game data not found");
+    ResetGameId();
+    return;
+  }
+
+  // There should be a directory as user id
   save_file_path.setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
   user_id_.clear();
   for (auto&& entry : save_file_path.entryList()) {
@@ -38,56 +46,48 @@ void DSSaveFile::OnGameChanged(int index) {
     break;
   }
   if (user_id_.isEmpty()) {
-    QMessageBox::critical(this, "User id not found", kIndex2Game[index]);
-    exit(1);
+    QMessageBox::critical(this, kIndex2Game[index], "User id not found");
+    ResetGameId();
+    return;
   }
   save_file_path.cd(user_id_);
-
-  // Read profiles
-  ui_.profile_combo_box->clear();
-  for (auto&& entry : save_file_path.entryList()) {
-    ui_.profile_combo_box->addItem(entry);
+  if (!save_file_path.exists(kIndex2File[index])) {
+    QMessageBox::critical(this, kIndex2Game[index], "Save data not found");
+    ResetGameId();
+    return;
   }
-  if (ui_.profile_combo_box->count() == 0) {
-    // TODO Create profile and set as current
-    QMessageBox::critical(this, "Profile not found",
-                          "Please create one first!");
-    exit(1);
+  if (!save_file_path.exists("backup")) {
+    save_file_path.mkdir("backup");
   }
-  OnProfileChanged(ui_.profile_combo_box->currentIndex());
-}
+  save_file_path.cd("backup");
+  current_game_id_ = index;
+  qDebug("Game path changed to: %s", QDIR_2_CSTR(save_file_path));
 
-void DSSaveFile::OnProfileChanged(int index) {
-  int game_id = ui_.game_combo_box->currentIndex();
-  QDir save_file_path(app_data_path_);
-  save_file_path.cd(kIndex2Game[game_id]);
-  save_file_path.cd(user_id_);
-  save_file_path.cd(ui_.profile_combo_box->itemText(index));
-  save_file_path.setFilter(QDir::Files);
   ui_.listWidget->clear();
+  ui_.listWidget->setCurrentRow(-1);
+  save_file_path.setFilter(QDir::Files);
   for (auto&& entry : save_file_path.entryList()) {
     ui_.listWidget->addItem(entry);
   }
-  if (ui_.listWidget->count() > 0) {
-    ui_.listWidget->setCurrentRow(0);
-  }
+  ui_.listWidget->setCurrentRow(ui_.listWidget->count() == 0 ? -1 : 0);
 }
 
 void DSSaveFile::LoadFile() {
-  if (ui_.listWidget->count() == 0) {
+  // Nothing selected
+  if (ui_.listWidget->currentRow() == -1) {
+    qDebug("Empty load");
     return;
   }
 
-  int game_id = ui_.game_combo_box->currentIndex();
   QDir save_file_path(app_data_path_);
-  save_file_path.cd(kIndex2Game[game_id]);
+  save_file_path.cd(kIndex2Game[current_game_id_]);
   save_file_path.cd(user_id_);
-  save_file_path.cd(ui_.profile_combo_box->currentText());
+  save_file_path.cd("backup");
   QFile save_file(
       save_file_path.filePath(ui_.listWidget->currentItem()->text()));
   if (save_file.exists()) {
     save_file_path.cd("..");
-    QFile old_save_file(save_file_path.filePath(kIndex2File[game_id]));
+    QFile old_save_file(save_file_path.filePath(kIndex2File[current_game_id_]));
     old_save_file.remove();
     save_file.copy(old_save_file.fileName());
   }
@@ -99,26 +99,6 @@ void DSSaveFile::SaveFile() {
   connect(&dialog, &SaveFileDialog::PassNewName, this,
           &DSSaveFile::OnNewFileName);
   dialog.exec();
-}
-
-void DSSaveFile::OnNewFileName(QString s) {
-  int game_id = ui_.game_combo_box->currentIndex();
-  s = kIndex2Prefix[game_id] + s;
-  // Check redunction
-  QDir save_file_path(app_data_path_);
-  save_file_path.cd(kIndex2Game[game_id]);
-  save_file_path.cd(user_id_);
-  save_file_path.cd(ui_.profile_combo_box->currentText());
-  QFile save_file(save_file_path.filePath(s));
-  if (save_file.exists()) {
-    QMessageBox::warning(this, "Save file already exists", "File not saved!");
-    return;
-  }
-  save_file_path.cd("..");
-  QFile old_save_file(save_file_path.filePath(kIndex2File[game_id]));
-  old_save_file.copy(save_file.fileName());
-  ui_.listWidget->addItem(s);
-  ui_.listWidget->sortItems();
 }
 
 void DSSaveFile::RenameFile() {
@@ -136,18 +116,36 @@ void DSSaveFile::RemoveFile() {
       this, "Before delete",
       "Are you sure to delete this file: " + current_name);
   if (selection == QMessageBox::Yes) {
-    int game_id = ui_.game_combo_box->currentIndex();
     QDir save_file_path(app_data_path_);
-    save_file_path.cd(kIndex2Game[game_id]);
+    save_file_path.cd(kIndex2Game[current_game_id_]);
     save_file_path.cd(user_id_);
-    save_file_path.cd(ui_.profile_combo_box->currentText());
+    save_file_path.cd("backup");
     save_file_path.remove(current_name);
     auto idx = 0;
     for (int idx = 0; idx < ui_.listWidget->count(); ++idx) {
       if (ui_.listWidget->item(idx)->text() == current_name) {
-        ui_.listWidget->takeItem(idx);
+        delete ui_.listWidget->takeItem(idx);
         break;
       }
     }
   }
+}
+
+void DSSaveFile::OnNewFileName(QString s) {
+  s = kIndex2Prefix[current_game_id_] + s;
+  // Check redunction
+  QDir save_file_path(app_data_path_);
+  save_file_path.cd(kIndex2Game[current_game_id_]);
+  save_file_path.cd(user_id_);
+  save_file_path.cd("backup");
+  QFile save_file(save_file_path.filePath(s));
+  if (save_file.exists()) {
+    QMessageBox::warning(this, "Save file already exists", "File not saved!");
+    return;
+  }
+  save_file_path.cd("..");
+  QFile old_save_file(save_file_path.filePath(kIndex2File[current_game_id_]));
+  old_save_file.copy(save_file.fileName());
+  ui_.listWidget->addItem(s);
+  ui_.listWidget->sortItems();
 }

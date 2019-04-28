@@ -3,43 +3,33 @@ A save file manager for the game Dark Souls III
 
 ## Prerequisites
 
-Visual Studio 2017(v141 toolchain)
+Visual Studio 2017(_MSC_VER 1916)
 
 Qt 5.10.1(msvc2017_64)
 
 ## Usage
 
-First of all, you should make sure your DS3 savefile is at the right place:
+First of all, you should make sure your From Software games have savefile layouts as:
 
 ```
-%APPDATA%\DarkSoulsIII\-----<numberstring>\-----DS30000.sl2
-                         |
-                         ---GraphicsConfig.xml
+%APPDATA%\<game name>\<user hash>\<file name>.sl2
+%APPDATA%\<game name>\GraphicsConfig.xml
 ```
-
-### Profile
-
-A profile means a set of save files saved by you. Infact, one Profile is one directory at the same path as `DS30000.sl2`, which means the name of each profile is unique
-
-* [ ] TODO: You should pre-create the profile directory before starting the program, a feature of creating new profile will be added.
 
 ### Save File
 
-A save file means one copy of the `DS30000.sl2` file. You could rename the file with no more than 12 characters(character is in `[A-Za-z0-9]`). The name of save file in the same profile should be different, but could be the same in different profiles.
+A save file means one copy of the `<file name>.sl2` file. You could rename the file with no more than 12 characters(character is in `[A-Za-z0-9]`). The name of save file in the same profile should be different.
 
 ### Features
 
-Load the save file `f` from profile `p`
-
-Save the current save data at profile `p` with name `f`
-
-* [ ] TODO: Rename the save file `f` to `f1` in the profile `p`
-
-Delete the save file `f` in the profile `p`
-
-* [ ] TODO: Add new profile `p`
+- Change game. Currently surpported:
+  - Dark Souls III
+  - Sekiro: Shadow Dies Twice
+- **Load** the save file from the selected backup file
+- **Save** the current save data to a backup file with name specified
+- * [ ] TODO: **Rename** the selected backup file
+- **Delete** the backup file
 
 ## Future Work
 
-* [ ] Sort save file by modified date
-* [ ] 2-step check before load
+* [ ] Sort save file by modified date(files are currently sorted by name)
